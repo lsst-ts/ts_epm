@@ -13,8 +13,7 @@ First release of the Electrical Power Manager CSC.
 
 This version includes many useful things:
 
-* A functioning EPM CSC which can connect to an SNMP server.
-* Support for Netboot PDUs and Schneider UPS-es.
+* A basic EPM CSC.
 
 Requires:
 
