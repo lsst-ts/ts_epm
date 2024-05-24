@@ -19,19 +19,33 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import typing
+from __future__ import annotations
 
-# For an explanation why these next lines are so complicated, see
-# https://confluence.lsstcorp.org/pages/viewpage.action?spaceKey=LTS&title=Enabling+Mypy+in+Pytest
-if typing.TYPE_CHECKING:
-    __version__ = "?"
-else:
-    try:
-        from .version import *
-    except ImportError:
-        __version__ = "?"
+__all__ = ["MibTreeElement", "MibTreeElementType"]
 
-from .config_schema import *
-from .epm_csc import *
-from .mib_tree import *
-from .utils import *
+import enum
+from dataclasses import dataclass
+
+
+@dataclass
+class MibTreeElement:
+    """MIB Tree Element.
+
+    A Tree Element can either be a BRANCH or a LEAF.
+    """
+
+    name: str
+    description: str
+    oid: str
+    parent: MibTreeElement | None
+    type: str
+
+    def __repr__(self) -> str:
+        return f"{'' if self.parent is None else str(self.parent) + '.'}{self.oid}"
+
+
+class MibTreeElementType(enum.StrEnum):
+    """MIB Tree Element Type."""
+
+    BRANCH = "BRANCH"
+    LEAF = "LEAF"
