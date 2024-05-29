@@ -17,7 +17,7 @@ test:
     - ts-salobj {{ salobj_version }}
     - ts-tcpip
     - ts-utils
-    - ts-ess-ccs
+    - ts-ess-csc
     - ts-ess-common
     - ts-dds
     - pysnmp
