@@ -39,7 +39,7 @@ from pysnmp.hlapi import (
     nextCmd,
 )
 
-from .mib_tree import mib_tree
+from .mib_tree_holder import MibTreeHolder
 from .snmp_server_simulator import SnmpServerSimulator
 from .utils import TelemetryItemName, TelemetryItemType
 
@@ -61,12 +61,16 @@ class SnmpDataClient(common.data_client.BaseReadLoopDataClient):
             simulation_mode=simulation_mode,
         )
 
+        self.mib_tree_holder = MibTreeHolder()
+
         # Attributes for the SNMP requests.
         self.snmp_engine = SnmpEngine()
         self.community_data = CommunityData("public", mpModel=0)
         self.transport_target = UdpTransportTarget((self.config.host, self.config.port))
         self.context_data = ContextData()
-        self.object_type = ObjectType(ObjectIdentity(str(mib_tree["sysDescr"])))
+        self.object_type = ObjectType(
+            ObjectIdentity(self.mib_tree_holder.mib_tree["sysDescr"].oid)
+        )
 
         # Keep track of the nextCmd function so we can override it when in
         # simulation mode.
@@ -146,7 +150,7 @@ additionalProperties: false
 
         await self.execute_next_cmd()
         # Only the sysDescr value is expected at this moment.
-        sys_descr = str(mib_tree["sysDescr"])
+        sys_descr = self.mib_tree_holder.mib_tree["sysDescr"].oid
         if len(self.snmp_result) == 1 and sys_descr in self.snmp_result:
             self.system_description = self.snmp_result[sys_descr]
         else:
@@ -154,8 +158,10 @@ additionalProperties: false
 
         # Create the ObjectType for the particular SNMP device type.
         device_type = self.config.device_type
-        if device_type in mib_tree:
-            self.object_type = ObjectType(ObjectIdentity(str(mib_tree[device_type])))
+        if device_type in self.mib_tree_holder.mib_tree:
+            self.object_type = ObjectType(
+                ObjectIdentity(self.mib_tree_holder.mib_tree[device_type].oid)
+            )
         else:
             raise ValueError(
                 f"Unknown device type {device_type!r}. "
@@ -185,11 +191,11 @@ additionalProperties: false
         if device_type != "pdu":
             for telemetry_item in telemetry_items:
                 mib_name = TelemetryItemName(telemetry_item).name
-                mib_oid = str(mib_tree[mib_name])
+                mib_oid = self.mib_tree_holder.mib_tree[mib_name].oid
                 telemetry_type = TelemetryItemType[mib_name]
                 snmp_value: int | float | str
                 match telemetry_type:
-                    case "integer":
+                    case "int":
                         snmp_value = int(self.snmp_result[mib_oid])
                     case "float":
                         snmp_value = float(self.snmp_result[mib_oid]) / 10.0

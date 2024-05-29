@@ -47,7 +47,7 @@ class MibTreeElement:
     type: str
 
     def __repr__(self) -> str:
-        return f"{'' if self.parent is None else str(self.parent) + '.'}{self.oid}"
+        return self.oid
 
 
 class MibTreeElementType(enum.StrEnum):

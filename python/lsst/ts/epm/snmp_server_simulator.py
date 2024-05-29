@@ -22,6 +22,8 @@
 __all__ = ["SnmpServerSimulator", "SIMULATED_SYS_DESCR"]
 
 import logging
+import random
+import string
 import typing
 
 from pysnmp.hlapi import (
@@ -36,16 +38,10 @@ from pysnmp.hlapi import (
 from pysnmp.proto.rfc1155 import ObjectName
 from pysnmp.proto.rfc1902 import OctetString
 
-from .mib_tree import mib_tree
+from .mib_tree_holder import MibTreeHolder
 from .utils import TelemetryItemType
 
 SIMULATED_SYS_DESCR = "SnmpServerSimulator"
-SYS_DESCR = [
-    (
-        ObjectName(value=str(mib_tree["sysDescr"])),
-        OctetString(value=SIMULATED_SYS_DESCR),
-    )
-]
 
 
 class SnmpServerSimulator:
@@ -53,6 +49,13 @@ class SnmpServerSimulator:
 
     def __init__(self, log: logging.Logger) -> None:
         self.log = log.getChild(type(self).__name__)
+        self.mib_tree_holder = MibTreeHolder()
+        self.SYS_DESCR = [
+            (
+                ObjectName(value=self.mib_tree_holder.mib_tree["sysDescr"].oid),
+                OctetString(value=SIMULATED_SYS_DESCR),
+            )
+        ]
 
     def snmp_cmd(
         self,
@@ -79,38 +82,58 @@ class SnmpServerSimulator:
         # noinspection PyProtectedMember
         object_identity = var_binds[0]._ObjectType__args[0]._ObjectIdentity__args[0]
 
-        if object_identity == str(mib_tree["sysDescr"]):
+        if object_identity == self.mib_tree_holder.mib_tree["sysDescr"].oid:
             # Handle the getCmd call for the system description.
-            return iter([[None, Integer(0), Integer(0), SYS_DESCR]])
+            return iter([[None, Integer(0), Integer(0), self.SYS_DESCR]])
         else:
-            oid_branch = [t for t in mib_tree if str(mib_tree[t]) == object_identity]
+            oid_branch = [
+                t
+                for t in self.mib_tree_holder.mib_tree
+                if self.mib_tree_holder.mib_tree[t].oid == object_identity
+            ]
             if len(oid_branch) != 1:
                 return iter(
                     [[f"Unknown OID {object_identity}.", Integer(0), Integer(0), ""]]
                 )
 
             snmp_items = []
-            for oid in mib_tree:
-                if str(mib_tree[oid]).startswith(object_identity):
+            for elt in self.mib_tree_holder.mib_tree:
+                if self.mib_tree_holder.mib_tree[elt].oid.startswith(object_identity):
                     try:
-                        match TelemetryItemType[oid]:
+                        match TelemetryItemType[elt]:
                             case "int":
-                                value = Integer(1)
+                                value = Integer(random.randrange(0, 100, 1))
                             case "float":
-                                value = Integer(101)
+                                # SNMP doesn't have floats. Instead an int
+                                # needs to be used and that needs to be
+                                # interpreted as a float by the reader.
+                                value = Integer(random.randrange(100, 1000, 1))
                             case "string":
-                                value = OctetString(value="Random string.")
+                                value = OctetString(
+                                    value="".join(
+                                        random.choices(
+                                            string.ascii_uppercase + string.digits, k=20
+                                        )
+                                    )
+                                )
                             case _:
                                 value = Integer(0)
                                 self.log.error(
-                                    f"Unknown telemetry item type {TelemetryItemType[oid]} for {oid=}"
+                                    f"Unknown telemetry item type {TelemetryItemType[elt]} for {elt=}"
                                 )
                         snmp_items.append(
                             [
                                 None,
                                 Integer(0),
                                 Integer(0),
-                                [(ObjectName(value=str(mib_tree[oid])), value)],
+                                [
+                                    (
+                                        ObjectName(
+                                            value=self.mib_tree_holder.mib_tree[elt].oid
+                                        ),
+                                        value,
+                                    )
+                                ],
                             ]
                         )
                     except KeyError:
