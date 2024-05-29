@@ -72,10 +72,3 @@ class EpmCsc(EssCsc):
             simulation_mode=simulation_mode,
             override=override,
         )
-
-        # TODO DM-44354 Add a new SNMP DataClient that gets the telemetry and
-        #  sends the SAL messages.
-
-    @staticmethod
-    def get_config_pkg() -> str:
-        return "ts_config_ocs"
