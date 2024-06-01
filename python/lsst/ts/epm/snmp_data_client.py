@@ -45,6 +45,26 @@ from .utils import TelemetryItemName, TelemetryItemType
 
 
 class SnmpDataClient(common.data_client.BaseReadLoopDataClient):
+    """Read SNMP data from a server and publish it as EPM telemetry.
+
+    Parameters
+    ----------
+    config : `types.SimpleNamespace`
+        The configuration, after validation by the schema returned
+        by `get_config_schema` and conversion to a types.SimpleNamespace.
+    topics : `salobj.Controller`
+        The telemetry topics this model can write, as a struct with attributes
+        such as ``tel_temperature``.
+    log : `logging.Logger`
+        Logger.
+    simulation_mode : `int`, optional
+        Simulation mode; 0 for normal operation.
+
+    Notes
+    -----
+    The config is required to contain "max_read_timeouts". If it doesn't, a
+    RuntimeError is raised at instantiation.
+    """
 
     def __init__(
         self,
@@ -52,7 +72,6 @@ class SnmpDataClient(common.data_client.BaseReadLoopDataClient):
         topics: salobj.Controller | types.SimpleNamespace,
         log: logging.Logger,
         simulation_mode: int = 0,
-        auto_reconnect: bool = False,
     ) -> None:
         super().__init__(
             config=config,
