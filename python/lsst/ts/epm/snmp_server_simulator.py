@@ -52,7 +52,7 @@ class SnmpServerSimulator:
         self.mib_tree_holder = MibTreeHolder()
         self.SYS_DESCR = [
             (
-                ObjectName(value=self.mib_tree_holder.mib_tree["sysDescr"].oid),
+                ObjectName(value=self.mib_tree_holder.mib_tree["sysDescr"].oid + ".0"),
                 OctetString(value=SIMULATED_SYS_DESCR),
             )
         ]
@@ -130,6 +130,7 @@ class SnmpServerSimulator:
                                     (
                                         ObjectName(
                                             value=self.mib_tree_holder.mib_tree[elt].oid
+                                            + ".0"
                                         ),
                                         value,
                                     )

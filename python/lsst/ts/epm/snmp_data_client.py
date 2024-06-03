@@ -47,6 +47,9 @@ from .utils import TelemetryItemName, TelemetryItemType
 class SnmpDataClient(common.data_client.BaseReadLoopDataClient):
     """Read SNMP data from a server and publish it as EPM telemetry.
 
+    SNMP stands for Simple Network Management Protocol.
+    EPM stands for Electronic Power Mamnager.
+
     Parameters
     ----------
     config : `types.SimpleNamespace`
@@ -169,7 +172,7 @@ additionalProperties: false
 
         await self.execute_next_cmd()
         # Only the sysDescr value is expected at this moment.
-        sys_descr = self.mib_tree_holder.mib_tree["sysDescr"].oid
+        sys_descr = self.mib_tree_holder.mib_tree["sysDescr"].oid + ".0"
         if len(self.snmp_result) == 1 and sys_descr in self.snmp_result:
             self.system_description = self.snmp_result[sys_descr]
         else:
@@ -210,7 +213,7 @@ additionalProperties: false
         if device_type != "pdu":
             for telemetry_item in telemetry_items:
                 mib_name = TelemetryItemName(telemetry_item).name
-                mib_oid = self.mib_tree_holder.mib_tree[mib_name].oid
+                mib_oid = self.mib_tree_holder.mib_tree[mib_name].oid + ".0"
                 telemetry_type = TelemetryItemType[mib_name]
                 snmp_value: int | float | str
                 match telemetry_type:

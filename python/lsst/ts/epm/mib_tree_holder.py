@@ -36,6 +36,13 @@ DATA_DIR = pathlib.Path(__file__).parent / "data"
 
 
 class MibTreeHolder:
+    """Holder of information in an MIB tree.
+
+    MIB stands for Management Information Base and holds the information for
+    managing the entities in a communication network, in this case SNMP or
+    Simple Network Management Protocol. The information can be represented as a
+    tree, hence the name of the class.
+    """
 
     def __init__(self) -> None:
         self.log = logging.getLogger(type(self).__name__)
@@ -45,6 +52,11 @@ class MibTreeHolder:
         self._add_mib_elements()
 
     def _add_default_elements(self) -> None:
+        """Add the default MIB elements.
+
+        The default elements are the root, system and enterprises branches as
+        well as a branch for Eaton PDU devices since their MIB file has a
+        deviating syntax."""
         snmp = MibTreeElement(
             name="snmp",
             description="snmp",
@@ -103,6 +115,8 @@ class MibTreeHolder:
         self.mib_tree[xups.name] = xups
 
     def _add_mib_elements(self) -> None:
+        """Loop over the MIB files and add their contents as a tree
+        structure."""
         for filename in DATA_DIR.glob("*.mib"):
             with open(filename) as f:
                 lines = f.readlines()
@@ -131,6 +145,13 @@ class MibTreeHolder:
                     self._process_obj_type(lines, line, obj_type_match)
 
     def _get_parent(self, parent_name: str) -> MibTreeElement | None:
+        """Get the MIB parent branch for the fiven parent name.
+
+        Parameters
+        ----------
+        parent_name : `str`
+            The name of the parent to get.
+        """
         parent: MibTreeElement | None = None
         if parent_name == "xupsMIB":
             parent_name = "xups"
@@ -147,6 +168,17 @@ class MibTreeHolder:
     def _process_obj_type(
         self, lines: list[str], line: str, obj_type_match: re.Match
     ) -> None:
+        """Utility method to process OBJECT_TYPE entries.
+
+        Parameters
+        ----------
+        lines : `list`[`str`]
+            The lines as read from an MIB file.
+        line : `str`
+            The current line that is processed.
+        obj_type_match : `re.Match`
+            Regex Match object used to look up the name of the object type.
+        """
         name = obj_type_match.group(1)
 
         description = ""
