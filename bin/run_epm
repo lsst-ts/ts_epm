@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # This file is part of ts_epm.
 #
 # Developed for the Vera Rubin Observatory Telescope and Site Systems.
@@ -19,21 +20,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import typing
+from lsst.ts.epm.epm_csc import run_epm
 
-# For an explanation why these next lines are so complicated, see
-# https://confluence.lsstcorp.org/pages/viewpage.action?spaceKey=LTS&title=Enabling+Mypy+in+Pytest
-if typing.TYPE_CHECKING:
-    __version__ = "?"
-else:
-    try:
-        from .version import *
-    except ImportError:
-        __version__ = "?"
-
-from .config_schema import *
-from .epm_csc import *
-from .mib_tree_holder import *
-from .snmp_data_client import *
-from .snmp_server_simulator import *
-from .utils import *
+run_epm()
