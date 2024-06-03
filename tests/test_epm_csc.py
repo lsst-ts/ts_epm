@@ -25,6 +25,8 @@ import unittest
 
 from lsst.ts import epm, salobj
 
+TEST_CONFIG_DIR = pathlib.Path(__file__).parents[1].joinpath("tests", "data", "config")
+
 
 class CscTestCase(salobj.BaseCscTestCase, unittest.IsolatedAsyncioTestCase):
     def basic_make_csc(
@@ -69,3 +71,18 @@ class CscTestCase(salobj.BaseCscTestCase, unittest.IsolatedAsyncioTestCase):
     async def test_bin_script(self) -> None:
         logging.info("test_bin_script")
         await self.check_bin_script(name="EPM", index=1, exe_name="run_epm")
+
+    async def test_snmp_data_clients(self) -> None:
+        async with self.make_csc(
+            initial_state=salobj.State.ENABLED,
+            config_dir=TEST_CONFIG_DIR,
+            simulation_mode=1,
+        ):
+            await self.assert_next_sample(
+                self.remote.tel_scheiderPm5xxx,
+                systemDescription=epm.SIMULATED_SYS_DESCR,
+            )
+            await self.assert_next_sample(
+                self.remote.tel_xups,
+                systemDescription=epm.SIMULATED_SYS_DESCR,
+            )

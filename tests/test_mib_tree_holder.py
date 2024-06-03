@@ -19,21 +19,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import typing
+import unittest
 
-# For an explanation why these next lines are so complicated, see
-# https://confluence.lsstcorp.org/pages/viewpage.action?spaceKey=LTS&title=Enabling+Mypy+in+Pytest
-if typing.TYPE_CHECKING:
-    __version__ = "?"
-else:
-    try:
-        from .version import *
-    except ImportError:
-        __version__ = "?"
+from lsst.ts import epm
 
-from .config_schema import *
-from .epm_csc import *
-from .mib_tree_holder import *
-from .snmp_data_client import *
-from .snmp_server_simulator import *
-from .utils import *
+
+class MibTreeTestCase(unittest.IsolatedAsyncioTestCase):
+    async def test_mib_tree(self) -> None:
+        self.mib_tree_holder = epm.MibTreeHolder()
+        assert str(self.mib_tree_holder.mib_tree["sysDescr"]) == "1.3.6.1.2.1.1.1"
+        assert self.mib_tree_holder.mib_tree["sysDescr"].oid == "1.3.6.1.2.1.1.1"

@@ -1,0 +1,21 @@
+instances:
+  - sal_index: 1
+    data_clients:
+      - client_class: SnmpDataClient
+        config:
+          host: localhost
+          port: 161
+          max_read_timeouts: 5
+          device_name: TestDevice
+          device_type: scheiderPm5xxx
+          poll_interval: 0.1
+          location: UnitTest
+      - client_class: SnmpDataClient
+        config:
+          host: localhost
+          port: 161
+          max_read_timeouts: 5
+          device_name: TestDevice
+          device_type: xups
+          poll_interval: 0.1
+          location: UnitTest
