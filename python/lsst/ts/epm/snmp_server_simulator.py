@@ -96,48 +96,61 @@ class SnmpServerSimulator:
                     [[f"Unknown OID {object_identity}.", Integer(0), Integer(0), ""]]
                 )
 
-            snmp_items = []
-            for elt in self.mib_tree_holder.mib_tree:
-                if self.mib_tree_holder.mib_tree[elt].oid.startswith(object_identity):
-                    try:
-                        match TelemetryItemType[elt]:
-                            case "int":
-                                value = Integer(random.randrange(0, 100, 1))
-                            case "float":
-                                # SNMP doesn't have floats. Instead an int
-                                # needs to be used and that needs to be
-                                # interpreted as a float by the reader.
-                                value = Integer(random.randrange(100, 1000, 1))
-                            case "string":
-                                value = OctetString(
-                                    value="".join(
-                                        random.choices(
-                                            string.ascii_uppercase + string.digits, k=20
-                                        )
+        snmp_items = self.generate_snmp_values(object_identity)
+        return iter(snmp_items)
+
+    def generate_snmp_values(self, object_identity: str) -> list[list]:
+        snmp_items: list[list] = []
+        for elt in self.mib_tree_holder.mib_tree:
+            if self.mib_tree_holder.mib_tree[elt].oid.startswith(object_identity):
+                try:
+                    match TelemetryItemType[elt]:
+                        case "int":
+                            value = Integer(random.randrange(0, 100, 1))
+                        case "float":
+                            # SNMP doesn't have floats. Instead an int needs to
+                            # be used and that needs to be interpreted as a
+                            # float by the reader.
+                            value = Integer(random.randrange(100, 1000, 1))
+                        case "string":
+                            value = OctetString(
+                                value="".join(
+                                    random.choices(
+                                        string.ascii_uppercase + string.digits, k=20
                                     )
                                 )
-                            case _:
-                                value = Integer(0)
-                                self.log.error(
-                                    f"Unknown telemetry item type {TelemetryItemType[elt]} for {elt=}"
-                                )
-                        snmp_items.append(
+                            )
+                        case _:
+                            value = Integer(0)
+                            self.log.error(
+                                f"Unknown telemetry item type {TelemetryItemType[elt]} for {elt=}"
+                            )
+                    # TODO DM-44577 Handle list items correctly.
+                    # Any single value OID ends in ".0" in the SNMP response.
+                    # Any multiple value ends in # ".1", ".2", etc. We only
+                    # regard ".1" for now.
+                    suffix = ".0"
+                    parent = self.mib_tree_holder.mib_tree[elt].parent
+                    assert parent is not None
+                    if parent.index:
+                        suffix = ".1"
+                    snmp_items.append(
+                        [
+                            None,
+                            Integer(0),
+                            Integer(0),
                             [
-                                None,
-                                Integer(0),
-                                Integer(0),
-                                [
-                                    (
-                                        ObjectName(
-                                            value=self.mib_tree_holder.mib_tree[elt].oid
-                                            + ".0"
-                                        ),
-                                        value,
-                                    )
-                                ],
-                            ]
-                        )
-                    except KeyError:
-                        # Deliberately ignored.
-                        pass
-            return iter(snmp_items)
+                                (
+                                    ObjectName(
+                                        value=self.mib_tree_holder.mib_tree[elt].oid
+                                        + suffix
+                                    ),
+                                    value,
+                                )
+                            ],
+                        ]
+                    )
+                except KeyError:
+                    # Deliberately ignored.
+                    pass
+        return snmp_items
