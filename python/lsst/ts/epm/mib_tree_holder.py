@@ -31,6 +31,7 @@ OBJECT_IDENTIFIER = r"^(\w+) +OBJECT IDENTIFIER +::= \{ ?(\w+) (\d+) ?\}$"
 OBJECT_TYPE = r"^(\w+) OBJECT-TYPE$"
 MIB_OID = r"^::= ?{ ?(\w+) +(\d+) ?}$"
 DESCRIPTION = "DESCRIPTION"
+INDEX = r"INDEX +\{ ?(\w+) ?\}"
 
 DATA_DIR = pathlib.Path(__file__).parent / "data"
 
@@ -185,9 +186,7 @@ class MibTreeHolder:
         while DESCRIPTION not in line:
             self._line_num += 1
             line = lines[self._line_num].strip()
-        # The line containing "::=" always follows the description in any
-        # MIB file.
-        while "::=" not in line:
+        while "::=" not in line and "INDEX " not in line:
             description += line.replace(DESCRIPTION, "").strip()
             if description != "":
                 description += " "
@@ -195,6 +194,14 @@ class MibTreeHolder:
             line = lines[self._line_num].strip()
         # Remove multiple spaces and strip white space.
         description = re.sub(r" +", " ", description).replace('"', "").strip()
+
+        index: str | None = None
+        if "INDEX " in line:
+            index_match = re.match(INDEX, line)
+            if index_match:
+                index = index_match.group(1)
+                self._line_num += 1
+                line = lines[self._line_num].strip()
 
         oid_match = re.match(MIB_OID, line)
         assert oid_match is not None
@@ -208,4 +215,5 @@ class MibTreeHolder:
             oid=f"{parent.oid}.{oid}",
             parent=parent,
             type=MibTreeElementType.LEAF,
+            index=index,
         )

@@ -220,13 +220,23 @@ additionalProperties: false
         if device_type != "pdu":
             for telemetry_item in telemetry_items:
                 mib_name = TelemetryItemName(telemetry_item).name
-                mib_oid = self.mib_tree_holder.mib_tree[mib_name].oid + ".0"
+                # TODO DM-44577 Handle list items correctly.
+                # Any single value OID ends in ".0" in the SNMP response. Any
+                # multiple value ends in ".1", ".2", etc. We only regard ".1"
+                # for now.
+                parent = self.mib_tree_holder.mib_tree[mib_name].parent
+                assert parent is not None
+                mib_oid = self.mib_tree_holder.mib_tree[mib_name].oid + (
+                    ".0" if not parent.index else ".1"
+                )
                 snmp_value = await self.get_telemetry_item_value(
                     telemetry_item, mib_name, mib_oid
                 )
                 telemetry_dict[telemetry_item] = snmp_value
         else:
-            # TODO DM-44576 Handle PDU telemetry separtately.
+            # TODO DM-44576 Handle PDU telemetry separately.
+            # TODO DM-44577 Add "systemDescription" to the PDU telemetry and
+            #  handle list items correctly.
             pass
 
         await telemetry_topic.set_write(**telemetry_dict)
