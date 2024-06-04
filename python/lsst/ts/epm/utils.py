@@ -45,6 +45,7 @@ class MibTreeElement:
     oid: str
     parent: MibTreeElement | None
     type: str
+    index: str | None = None
 
     def __repr__(self) -> str:
         return self.oid

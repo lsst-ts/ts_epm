@@ -23,6 +23,8 @@ __all__ = ["SnmpDataClient"]
 
 import asyncio
 import logging
+import math
+import re
 import types
 import typing
 
@@ -42,6 +44,11 @@ from pysnmp.hlapi import (
 from .mib_tree_holder import MibTreeHolder
 from .snmp_server_simulator import SnmpServerSimulator
 from .utils import TelemetryItemName, TelemetryItemType
+
+numeric_const_pattern = (
+    r"[-+]? (?: (?: \d* \. \d+ ) | (?: \d+ \.? ) )(?: [Ee] [+-]? \d+ ) ?"
+)
+rx = re.compile(numeric_const_pattern, re.VERBOSE)
 
 
 class SnmpDataClient(common.data_client.BaseReadLoopDataClient):
@@ -195,7 +202,7 @@ additionalProperties: false
         await self.execute_next_cmd()
         device_type = self.config.device_type
         telemetry_topic = getattr(self.topics, f"tel_{device_type}")
-        telemetry_dict: dict[str, typing.Any] = {
+        telemetry_dict: dict[str, int | float | str] = {
             "systemDescription": self.system_description
         }
 
@@ -213,25 +220,118 @@ additionalProperties: false
         if device_type != "pdu":
             for telemetry_item in telemetry_items:
                 mib_name = TelemetryItemName(telemetry_item).name
-                mib_oid = self.mib_tree_holder.mib_tree[mib_name].oid + ".0"
-                telemetry_type = TelemetryItemType[mib_name]
-                snmp_value: int | float | str
-                match telemetry_type:
-                    case "int":
-                        snmp_value = int(self.snmp_result[mib_oid])
-                    case "float":
-                        snmp_value = float(self.snmp_result[mib_oid]) / 10.0
-                    case "string":
-                        snmp_value = self.snmp_result[mib_oid]
-                    case _:
-                        snmp_value = self.snmp_result[mib_oid]
+                # TODO DM-44577 Handle list items correctly.
+                # Any single value OID ends in ".0" in the SNMP response. Any
+                # multiple value ends in ".1", ".2", etc. We only regard ".1"
+                # for now.
+                parent = self.mib_tree_holder.mib_tree[mib_name].parent
+                assert parent is not None
+                mib_oid = self.mib_tree_holder.mib_tree[mib_name].oid + (
+                    ".0" if not parent.index else ".1"
+                )
+                snmp_value = await self.get_telemetry_item_value(
+                    telemetry_item, mib_name, mib_oid
+                )
                 telemetry_dict[telemetry_item] = snmp_value
         else:
-            # TODO DM-44576 Handle PDU telemetry separtately.
+            # TODO DM-44576 Handle PDU telemetry separately.
+            # TODO DM-44577 Add "systemDescription" to the PDU telemetry and
+            #  handle list items correctly.
             pass
 
         await telemetry_topic.set_write(**telemetry_dict)
         await asyncio.sleep(self.config.poll_interval)
+
+    async def get_telemetry_item_value(
+        self, telemetry_item: str, mib_name: str, mib_oid: str
+    ) -> int | float | str:
+        """Get the value of a telemetry item.
+
+        Parameters
+        ----------
+        telemetry_item : `str`
+            The name of the telemetry item.
+        mib_name : `str`
+            The MIB name of the item.
+        mib_oid : `str`
+            The MIB OID of the item.
+
+        Returns
+        -------
+        int | float | str
+            The value of the item.
+
+        Raises
+        ------
+        ValueError
+            In case no float value could be gotten.
+        """
+        telemetry_type = TelemetryItemType[mib_name]
+        snmp_value: int | float | str
+        match telemetry_type:
+            case "int":
+                if mib_oid in self.snmp_result:
+                    snmp_value = int(self.snmp_result[mib_oid])
+                else:
+                    snmp_value = 0
+                    self.log.warning(
+                        f"Could not find {mib_oid=} for int {telemetry_item=}"
+                    )
+            case "float":
+                try:
+                    if mib_oid in self.snmp_result:
+                        snmp_value = await self._extract_float_from_string(
+                            self.snmp_result[mib_oid]
+                        )
+                    else:
+                        snmp_value = math.nan
+                        self.log.warning(
+                            f"Could not find {mib_oid=} for float {telemetry_item=}"
+                        )
+                except ValueError:
+                    self.log.error(
+                        f"Could not convert value {self.snmp_result[mib_oid]!r} "
+                        f"for {mib_oid=} == {telemetry_item=} to float."
+                    )
+                    snmp_value = math.nan
+            case "string":
+                if mib_oid in self.snmp_result:
+                    snmp_value = self.snmp_result[mib_oid]
+                else:
+                    snmp_value = ""
+                    self.log.warning(
+                        f"Could not find {mib_oid=} for str {telemetry_item=}"
+                    )
+            case _:
+                snmp_value = self.snmp_result[mib_oid]
+        return snmp_value
+
+    async def _extract_float_from_string(self, float_string: str) -> float:
+        """Extract a float value from a string.
+
+        It is assumed here that there only is a single float value in the
+        string. If no or more than one float value is found, a ValueError is
+        raised.
+
+        Parameters
+        ----------
+        float_string : `str`
+            The string containing the float value.
+
+        Raises
+        ------
+        ValueError
+            In case no single float value could be extracted from the string.
+        """
+        try:
+            float_value = float(float_string) / 10.0
+        except ValueError as e:
+            float_values = rx.findall(float_string)
+            if len(float_values) > 0:
+                float_value = float_values[0]
+            else:
+                raise e
+        return float_value
 
     async def execute_next_cmd(self) -> None:
         """Execute the SNMP nextCmd command.
