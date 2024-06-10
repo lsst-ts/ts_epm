@@ -78,6 +78,8 @@ class CscTestCase(salobj.BaseCscTestCase, unittest.IsolatedAsyncioTestCase):
             config_dir=TEST_CONFIG_DIR,
             simulation_mode=1,
         ):
+            data = await self.assert_next_sample(self.remote.tel_pdu)
+            assert isinstance(data.powerOutletStatus, list)
             await self.assert_next_sample(
                 self.remote.tel_scheiderPm5xxx,
                 systemDescription=epm.SIMULATED_SYS_DESCR,
