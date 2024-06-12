@@ -26,6 +26,22 @@ from lsst.ts import epm
 
 class MibTreeTestCase(unittest.IsolatedAsyncioTestCase):
     async def test_mib_tree(self) -> None:
-        self.mib_tree_holder = epm.MibTreeHolder()
-        assert str(self.mib_tree_holder.mib_tree["sysDescr"]) == "1.3.6.1.2.1.1.1"
-        assert self.mib_tree_holder.mib_tree["sysDescr"].oid == "1.3.6.1.2.1.1.1"
+        mib_tree_holder = epm.MibTreeHolder()
+        assert str(mib_tree_holder.mib_tree["sysDescr"]) == "1.3.6.1.2.1.1.1"
+        assert mib_tree_holder.mib_tree["sysDescr"].oid == "1.3.6.1.2.1.1.1"
+
+        enterprises_children = [
+            branch
+            for branch in mib_tree_holder.mib_tree
+            if mib_tree_holder.mib_tree[branch].parent is not None
+            and mib_tree_holder.mib_tree[branch].parent.name == "enterprises"
+        ]
+        assert len(enterprises_children) == 3
+        assert "eaton" in enterprises_children
+        assert "pdu" in enterprises_children
+        assert "scheiderPm5xxx" in enterprises_children
+
+        assert "xups" in mib_tree_holder.mib_tree
+        assert mib_tree_holder.mib_tree["xups"].parent.name == "eaton"
+
+        assert len(mib_tree_holder.pending_modules) == 0

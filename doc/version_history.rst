@@ -6,6 +6,22 @@
 Version History
 ###############
 
+v0.1.2
+======
+
+* Improve reading of MIB files.
+* Improve simulating and processing of telemetry.
+
+Requires:
+
+* ts_salobj 7
+* ts_idl 4.7.1
+* IDL file for EPM from ts_xml 21
+* ts_ess_csc
+* ts_ess_common
+* ts_tcpip
+* ts_utils
+
 v0.1.1
 ======
 
