@@ -22,6 +22,9 @@
 from __future__ import annotations
 
 __all__ = [
+    "FREQUENCY_OID_LIST",
+    "PDU_HEX_OID_LIST",
+    "SCHNEIDER_FLOAT_AS_STRING_OID_LIST",
     "MibTreeElement",
     "MibTreeElementType",
     "TelemetryItemName",
@@ -31,6 +34,61 @@ __all__ = [
 
 import enum
 from dataclasses import dataclass
+
+# List of OIDs for which the frequency value is given in tens of Hz.
+FREQUENCY_OID_LIST = [
+    "1.3.6.1.4.1.534.1.3.1.0",
+    "1.3.6.1.4.1.534.1.4.2.0",
+    "1.3.6.1.4.1.534.1.5.1.0",
+]
+
+# List of PDU OIDs for which a float value is given as a hexidecimal encoded
+# string.
+PDU_HEX_OID_LIST = [
+    "1.3.6.1.4.1.21728.3.3.2.0",
+    "1.3.6.1.4.1.21728.3.3.3.0",
+    "1.3.6.1.4.1.21728.3.3.4.0",
+    "1.3.6.1.4.1.21728.3.3.5.0",
+]
+
+# List of Schneider UPS OIDs for which a float value is given as a plain text
+# string.
+SCHNEIDER_FLOAT_AS_STRING_OID_LIST = [
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.5.1.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.5.2.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.5.3.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.5.5.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.5.6.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.5.7.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.3.1.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.3.2.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.3.3.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.3.4.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.2.1.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.7.1.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.7.2.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.7.3.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.7.5.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.7.6.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.7.7.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.7.9.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.7.10.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.7.11.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.8.1.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.8.2.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.8.3.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.8.5.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.8.6.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.8.7.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.8.4.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.8.8.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.7.4.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.7.8.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.7.12.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.10.2.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.10.6.0",
+    "1.3.6.1.4.1.3833.1.100.1.3.1.3.10.10.0",
+]
 
 
 @dataclass
@@ -63,12 +121,15 @@ class TelemetryItemName(enum.StrEnum):
     aeApparentEDelivered = "apparentEnergyDelivered"
     aeReactiveEDelivered = "reactiveEnergyDelivered"
     aeResetDateTime = "resetDateTime"
+    currentDrawMax1 = "acMaxDraw"
+    currentDrawStatus1 = "acCurrentDraw"
     fFrequency = "systemFrequency"
     lcIC = "loadCurrentC"
     lcIa = "loadCurrentA"
     lcIb = "loadCurrentB"
     lcIn = "neutralCurrent"
     midSerialNumber = "serialNumber"
+    outletStatus = "powerOutletStatus"
     pActivePa = "activePowerA"
     pActivePb = "activePowerB"
     pActivePc = "activePowerC"
@@ -117,12 +178,15 @@ class TelemetryItemType(enum.StrEnum):
     aeApparentEDelivered = "float"
     aeReactiveEDelivered = "float"
     aeResetDateTime = "string"
+    currentDrawMax1 = "float"
+    currentDrawStatus1 = "float"
     fFrequency = "float"
     lcIC = "float"
     lcIa = "float"
     lcIb = "float"
     lcIn = "float"
     midSerialNumber = "string"
+    outletStatus = "int"
     pActivePa = "float"
     pActivePb = "float"
     pActivePc = "float"
@@ -171,12 +235,15 @@ class TelemetryItemUnit(enum.StrEnum):
     aeApparentEDelivered = "J"
     aeReactiveEDelivered = "J"
     aeResetDateTime = "unitless"
+    currentDrawMax1 = "A"
+    currentDrawStatus1 = "A"
     fFrequency = "Hz"
     lcIC = "A"
     lcIa = "A"
     lcIb = "A"
     lcIn = "A"
     midSerialNumber = "unitless"
+    outletStatus = "unitless"
     pActivePa = "kW"
     pActivePb = "kW"
     pActivePc = "kW"

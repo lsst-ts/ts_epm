@@ -21,18 +21,24 @@
 
 import logging
 import types
+import typing
 import unittest
 from unittest.mock import AsyncMock
 
 from lsst.ts import epm
+from lsst.ts.xml.component_info import ComponentInfo
 
 
 class SnmpDataClientTestCase(unittest.IsolatedAsyncioTestCase):
-    async def test_snmp(self) -> None:
+    async def test_snmp_data_client(self) -> None:
         log = logging.getLogger()
         for device_type in ["pdu", "scheiderPm5xxx", "xups"]:
+            component_info = ComponentInfo(name="EPM", topic_subname="")
             tel_topic = AsyncMock()
-            tel_topic.DataType = types.SimpleNamespace()
+            tel_topic.DataType = await self.mock_data_type(component_info, device_type)
+            tel_topic.topic_info.fields = component_info.topics[
+                f"tel_{device_type}"
+            ].fields
             topics = types.SimpleNamespace(**{f"tel_{device_type}": tel_topic})
             config = types.SimpleNamespace(
                 host="localhost",
@@ -52,3 +58,44 @@ class SnmpDataClientTestCase(unittest.IsolatedAsyncioTestCase):
             await snmp_data_client.read_data()
             tel_topic = getattr(topics, f"tel_{config.device_type}")
             tel_topic.set_write.assert_called_once()
+
+    async def mock_data_type(
+        self, component_info: ComponentInfo, device_type: str
+    ) -> types.SimpleNamespace:
+        """Mock the DataType of a telemetry topic.
+
+        Parameters
+        ----------
+        component_info : `ComponentInfo`
+            The component info derived from the EPM XML files.
+        device_type : `str`
+            The type of SNMP device.
+
+        Returns
+        -------
+        typing.SimpleNamespace
+            A SimpleNameSpace representing the DataType.
+        """
+        telemetry_items: dict[str, typing.Any] = {}
+        for field in component_info.topics[f"tel_{device_type}"].fields:
+            field_info = component_info.topics[f"tel_{device_type}"].fields[field]
+            sal_type = field_info.sal_type
+            count = field_info.count
+            match sal_type:
+                case "int":
+                    if count == 1:
+                        telemetry_items[field] = 0
+                    else:
+                        telemetry_items[field] = [0 for _ in range(count)]
+                case "float" | "double":
+                    if count == 1:
+                        telemetry_items[field] = 0.0
+                    else:
+                        telemetry_items[field] = [0.0 for _ in range(count)]
+                case "string":
+                    if count == 1:
+                        telemetry_items[field] = ""
+                    else:
+                        telemetry_items[field] = ["" for _ in range(count)]
+        data_type = types.SimpleNamespace(**telemetry_items)
+        return data_type

@@ -7,6 +7,15 @@ instances:
           port: 161
           max_read_timeouts: 5
           device_name: TestDevice
+          device_type: pdu
+          poll_interval: 0.1
+          location: UnitTest
+      - client_class: SnmpDataClient
+        config:
+          host: localhost
+          port: 161
+          max_read_timeouts: 5
+          device_name: TestDevice
           device_type: scheiderPm5xxx
           poll_interval: 0.1
           location: UnitTest
