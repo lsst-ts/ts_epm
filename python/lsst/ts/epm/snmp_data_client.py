@@ -153,9 +153,6 @@ properties:
     description: The amount of time [s] between each telemetry poll.
     type: number
     default: 1.0
-  location:
-    description: Device location.
-    type: string
 required:
   - host
   - port
@@ -163,7 +160,6 @@ required:
   - device_name
   - device_type
   - poll_interval
-  - location
 additionalProperties: false
 """
         )

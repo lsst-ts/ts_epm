@@ -10,6 +10,7 @@ v0.1.3
 ======
 
 * Support configurable SNMP community.
+* Removed unused location configuration item.
 
 Requires:
 
