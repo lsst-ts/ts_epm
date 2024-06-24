@@ -99,8 +99,7 @@ class SnmpDataClient(common.data_client.BaseReadLoopDataClient):
 
         # Attributes for the SNMP requests.
         self.snmp_engine = SnmpEngine()
-        communmity = "rubinobs" if self.device_type == "pdu" else "public"
-        self.community_data = CommunityData(communmity, mpModel=0)
+        self.community_data = CommunityData(self.config.snmp_community, mpModel=0)
         self.transport_target = UdpTransportTarget((self.config.host, self.config.port))
         self.context_data = ContextData()
         self.object_type = ObjectType(
@@ -146,6 +145,10 @@ properties:
     - pdu
     - scheiderPm5xxx
     - xups
+  snmp_community:
+    description: The SNMP community.
+    type: string
+    default: public
   poll_interval:
     description: The amount of time [s] between each telemetry poll.
     type: number

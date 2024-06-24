@@ -8,6 +8,7 @@ instances:
           max_read_timeouts: 5
           device_name: TestDevice
           device_type: pdu
+          snmp_community: rubinobs
           poll_interval: 0.1
           location: UnitTest
       - client_class: SnmpDataClient
@@ -17,6 +18,7 @@ instances:
           max_read_timeouts: 5
           device_name: TestDevice
           device_type: scheiderPm5xxx
+          snmp_community: public
           poll_interval: 0.1
           location: UnitTest
       - client_class: SnmpDataClient
@@ -26,5 +28,6 @@ instances:
           max_read_timeouts: 5
           device_name: TestDevice
           device_type: xups
+          snmp_community: public
           poll_interval: 0.1
           location: UnitTest
