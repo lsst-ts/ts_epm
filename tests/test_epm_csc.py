@@ -51,6 +51,7 @@ class CscTestCase(salobj.BaseCscTestCase, unittest.IsolatedAsyncioTestCase):
         logging.info("test_standard_state_transitions")
         async with self.make_csc(
             initial_state=salobj.State.STANDBY,
+            config_dir=TEST_CONFIG_DIR,
             simulation_mode=1,
         ):
             await self.check_standard_state_transitions(enabled_commands=())
