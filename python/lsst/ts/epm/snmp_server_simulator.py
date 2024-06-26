@@ -182,22 +182,11 @@ class SnmpServerSimulator:
         """
         match TelemetryItemType[elt]:
             case "int":
-                value = Integer(random.randrange(0, 100, 1))
+                value = self.generate_integer(oid)
             case "float":
-                if oid.startswith(self.mib_tree_holder.mib_tree["pdu"].oid):
-                    value = self._generate_pdu_float(oid)
-                elif oid in FREQUENCY_OID_LIST:
-                    value = Integer(FIFTY_HZ_IN_TENS)
-                elif oid in SCHNEIDER_FLOAT_AS_STRING_OID_LIST:
-                    value = self._generate_schneider_float_string()
-                else:
-                    value = self._generate_random_float()
+                value = self.generate_float(oid)
             case "string":
-                value = OctetString(
-                    value="".join(
-                        random.choices(string.ascii_uppercase + string.digits, k=20)
-                    )
-                )
+                value = self.generate_string(oid)
             case _:
                 value = Integer(0)
                 self.log.error(
@@ -205,6 +194,61 @@ class SnmpServerSimulator:
                 )
         self.snmp_items.append(
             [None, Integer(0), Integer(0), [(ObjectName(value=oid), value)]]
+        )
+
+    def generate_integer(self, oid: str) -> Integer:
+        """Generate an integer value.
+
+        Parameters
+        ----------
+        oid : `str`
+            The OID to generate an integer value for.
+
+        Returns
+        -------
+        Integer
+            An SNMP Integer object.
+        """
+        return Integer(random.randrange(0, 100, 1))
+
+    def generate_float(self, oid: str) -> Integer | OctetString:
+        """Generate a float value.
+
+        Parameters
+        ----------
+        oid : `str`
+            The OID to generate a float value for.
+
+        Returns
+        -------
+        Integer | OctetString
+            An SNMP Integer or OctetString object.
+        """
+        if oid.startswith(self.mib_tree_holder.mib_tree["pdu"].oid):
+            value = self._generate_pdu_float(oid)
+        elif oid in FREQUENCY_OID_LIST:
+            value = Integer(FIFTY_HZ_IN_TENS)
+        elif oid in SCHNEIDER_FLOAT_AS_STRING_OID_LIST:
+            value = self._generate_schneider_float_string()
+        else:
+            value = self._generate_random_float()
+        return value
+
+    def generate_string(self, oid: str) -> OctetString:
+        """Generate a string value.
+
+        Parameters
+        ----------
+        oid : `str`
+            The OID to generate a string value for.
+
+        Returns
+        -------
+        OctetString
+            An SNMP OctetString object.
+        """
+        return OctetString(
+            value="".join(random.choices(string.ascii_uppercase + string.digits, k=20))
         )
 
     def _generate_pdu_float(self, oid: str) -> Integer | OctetString:

@@ -11,6 +11,8 @@ v0.1.3
 
 * Support configurable SNMP community.
 * Removed unused location configuration item.
+* Add more TelemetryItem values.
+* Add support for XML 22.0 array fields.
 
 Requires:
 
