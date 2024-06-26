@@ -6,6 +6,24 @@
 Version History
 ###############
 
+v0.1.3
+======
+
+* Support configurable SNMP community.
+* Removed unused location configuration item.
+* Add more TelemetryItem values.
+* Add support for XML 22.0 array fields.
+
+Requires:
+
+* ts_salobj 7
+* ts_idl 4.7.1
+* IDL file for EPM from ts_xml 21
+* ts_ess_csc
+* ts_ess_common
+* ts_tcpip
+* ts_utils
+
 v0.1.2
 ======
 

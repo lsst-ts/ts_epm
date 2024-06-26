@@ -46,8 +46,8 @@ class SnmpDataClientTestCase(unittest.IsolatedAsyncioTestCase):
                 max_read_timeouts=5,
                 device_name="TestDevice",
                 device_type=device_type,
+                snmp_community="public",
                 poll_interval=0.1,
-                location="UnitTest",
             )
             snmp_data_client = epm.SnmpDataClient(
                 config=config, topics=topics, log=log, simulation_mode=1

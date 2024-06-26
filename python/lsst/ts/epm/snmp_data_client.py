@@ -99,8 +99,7 @@ class SnmpDataClient(common.data_client.BaseReadLoopDataClient):
 
         # Attributes for the SNMP requests.
         self.snmp_engine = SnmpEngine()
-        communmity = "rubinobs" if self.device_type == "pdu" else "public"
-        self.community_data = CommunityData(communmity, mpModel=0)
+        self.community_data = CommunityData(self.config.snmp_community, mpModel=0)
         self.transport_target = UdpTransportTarget((self.config.host, self.config.port))
         self.context_data = ContextData()
         self.object_type = ObjectType(
@@ -146,13 +145,14 @@ properties:
     - pdu
     - scheiderPm5xxx
     - xups
+  snmp_community:
+    description: The SNMP community.
+    type: string
+    default: public
   poll_interval:
     description: The amount of time [s] between each telemetry poll.
     type: number
     default: 1.0
-  location:
-    description: Device location.
-    type: string
 required:
   - host
   - port
@@ -160,7 +160,6 @@ required:
   - device_name
   - device_type
   - poll_interval
-  - location
 additionalProperties: false
 """
         )
@@ -207,9 +206,6 @@ additionalProperties: false
         await self.execute_next_cmd()
         telemetry_topic = getattr(self.topics, f"tel_{self.device_type}")
         telemetry_dict: dict[str, typing.Any] = {}
-        # TODO DM-44577 Add "systemDescription" to the PDU telemetry.
-        if self.device_type != "pdu":
-            telemetry_dict["systemDescription"] = self.system_description
 
         # Make the code work with both the DDS and Kafka versions of ts_salobj.
         if hasattr(telemetry_topic, "metadata"):
@@ -218,6 +214,12 @@ additionalProperties: false
             fields = telemetry_topic.topic_info.fields
         else:
             fields = {}
+
+        # TODO DM-45001 From XML 22.0 onward all EPM telemetry topics will have
+        #  a systemDescription field so the if may be removed and setting the
+        #  value in the telemetry_dict should remain.
+        if "systemDescription" in fields:
+            telemetry_dict["systemDescription"] = self.system_description
 
         telemetry_items = [
             i
@@ -262,8 +264,6 @@ additionalProperties: false
         assert parent is not None
 
         snmp_value: typing.Any
-        # TODO DM-44577 Backward compatibility with XML 21.0 where some list
-        #  items were added as single values.
         if parent.index and await self._is_single_or_multiple(
             telemetry_item, telemetry_topic
         ):
@@ -277,11 +277,6 @@ additionalProperties: false
                         )
                     )
         else:
-            # TODO DM-44577 Backward compatibility with XML 21.0 where some
-            #  list items were added as single values.
-            # Any single value OID ends in ".0" in the SNMP response. Any
-            # multiple value either ends in ".0", ".1", etc, or  ends in ".1",
-            # ".2", etc. We only regard the first value for now.
             if self.mib_tree_holder.mib_tree[mib_name].oid + ".0" in self.snmp_result:
                 mib_oid = self.mib_tree_holder.mib_tree[mib_name].oid + ".0"
             else:
