@@ -6,6 +6,21 @@
 Version History
 ###############
 
+v0.2.0
+======
+
+* Run the blocking `execute_next_cmd` command in an asyncio loop.
+
+Requires:
+
+* ts_salobj 7
+* ts_idl 4.7.1
+* IDL file for EPM from ts_xml 21
+* ts_ess_csc
+* ts_ess_common
+* ts_tcpip
+* ts_utils
+
 v0.1.3
 ======
 
