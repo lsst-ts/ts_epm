@@ -363,7 +363,7 @@ additionalProperties: false
                     snmp_value = int(self.snmp_result[mib_oid])
                 else:
                     snmp_value = 0
-                    self.log.warning(
+                    self.log.debug(
                         f"Could not find {mib_oid=} for int {telemetry_item=}. "
                         "Ignoring."
                     )
@@ -374,7 +374,7 @@ additionalProperties: false
                     )
                 else:
                     snmp_value = math.nan
-                    self.log.warning(
+                    self.log.debug(
                         f"Could not find {mib_oid=} for float {telemetry_item=}. "
                         "Ignoring."
                     )
@@ -383,7 +383,7 @@ additionalProperties: false
                     snmp_value = self.snmp_result[mib_oid]
                 else:
                     snmp_value = ""
-                    self.log.warning(
+                    self.log.debug(
                         f"Could not find {mib_oid=} for str {telemetry_item=}. "
                         "Ignoring."
                     )
