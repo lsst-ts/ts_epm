@@ -22,6 +22,7 @@
 __all__ = ["SnmpDataClient"]
 
 import asyncio
+import concurrent
 import logging
 import math
 import re
@@ -182,7 +183,12 @@ additionalProperties: false
             snmp_server_simulator = SnmpServerSimulator(log=self.log)
             self.next_cmd = snmp_server_simulator.snmp_cmd
 
-        await self.execute_next_cmd()
+        # Call the blocking `execute_next_cmd` method from within the async
+        # loop.
+        loop = asyncio.get_running_loop()
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            await loop.run_in_executor(pool, self.execute_next_cmd)
+
         # Only the sysDescr value is expected at this moment.
         sys_descr = self.mib_tree_holder.mib_tree["sysDescr"].oid + ".0"
         if sys_descr in self.snmp_result:
@@ -203,7 +209,12 @@ additionalProperties: false
 
     async def read_data(self) -> None:
         """Read data from the SNMP server."""
-        await self.execute_next_cmd()
+        # Call the blocking `execute_next_cmd` method from within the async
+        # loop.
+        loop = asyncio.get_running_loop()
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            await loop.run_in_executor(pool, self.execute_next_cmd)
+
         telemetry_topic = getattr(self.topics, f"tel_{self.device_type}")
         telemetry_dict: dict[str, typing.Any] = {}
 
@@ -352,7 +363,7 @@ additionalProperties: false
                     snmp_value = int(self.snmp_result[mib_oid])
                 else:
                     snmp_value = 0
-                    self.log.warning(
+                    self.log.debug(
                         f"Could not find {mib_oid=} for int {telemetry_item=}. "
                         "Ignoring."
                     )
@@ -363,7 +374,7 @@ additionalProperties: false
                     )
                 else:
                     snmp_value = math.nan
-                    self.log.warning(
+                    self.log.debug(
                         f"Could not find {mib_oid=} for float {telemetry_item=}. "
                         "Ignoring."
                     )
@@ -372,7 +383,7 @@ additionalProperties: false
                     snmp_value = self.snmp_result[mib_oid]
                 else:
                     snmp_value = ""
-                    self.log.warning(
+                    self.log.debug(
                         f"Could not find {mib_oid=} for str {telemetry_item=}. "
                         "Ignoring."
                     )
@@ -414,8 +425,11 @@ additionalProperties: false
                 raise e
         return float_value
 
-    async def execute_next_cmd(self) -> None:
+    def execute_next_cmd(self) -> None:
         """Execute the SNMP nextCmd command.
+
+        This is a **blocking** method that needs to be called with the asyncio
+        `run_in_executor` method.
 
         Raises
         ------
