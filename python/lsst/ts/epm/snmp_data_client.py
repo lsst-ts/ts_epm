@@ -216,7 +216,9 @@ additionalProperties: false
             await loop.run_in_executor(pool, self.execute_next_cmd)
 
         telemetry_topic = getattr(self.topics, f"tel_{self.device_type}")
-        telemetry_dict: dict[str, typing.Any] = {}
+        telemetry_dict: dict[str, typing.Any] = {
+            "systemDescription": self.system_description
+        }
 
         # Make the code work with both the DDS and Kafka versions of ts_salobj.
         if hasattr(telemetry_topic, "metadata"):
@@ -225,12 +227,6 @@ additionalProperties: false
             fields = telemetry_topic.topic_info.fields
         else:
             fields = {}
-
-        # TODO DM-45001 From XML 22.0 onward all EPM telemetry topics will have
-        #  a systemDescription field so the if may be removed and setting the
-        #  value in the telemetry_dict should remain.
-        if "systemDescription" in fields:
-            telemetry_dict["systemDescription"] = self.system_description
 
         telemetry_items = [
             i
