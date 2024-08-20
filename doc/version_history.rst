@@ -6,6 +6,21 @@
 Version History
 ###############
 
+v0.3.0
+======
+
+* Remove backward compatibility with XML 21.0.
+
+Requires:
+
+* ts_salobj 7
+* ts_idl 4.7.1
+* IDL file for EPM from ts_xml 22
+* ts_ess_csc
+* ts_ess_common
+* ts_tcpip
+* ts_utils
+
 v0.2.0
 ======
 
