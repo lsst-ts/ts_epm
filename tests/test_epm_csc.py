@@ -90,12 +90,8 @@ class CscTestCase(salobj.BaseCscTestCase, unittest.IsolatedAsyncioTestCase):
             data = await self.assert_next_sample(topic)
             device_info = component_info.topics[topic_name]
 
-            # TODO DM-45001 From XML 22.0 onward all EPM telemetry topics will
-            #  have a systemDescription field so the if may be removed and the
-            #  rest should be kept.
-            if hasattr(data, "systemDescription"):
-                system_description = getattr(data, "systemDescription")
-                assert system_description == epm.SIMULATED_SYS_DESCR
+            system_description = getattr(data, "systemDescription")
+            assert system_description == epm.SIMULATED_SYS_DESCR
 
             for array_field_name in device_info.array_fields:
                 field_data = getattr(data, array_field_name)
