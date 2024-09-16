@@ -6,6 +6,10 @@
 Version History
 ###############
 
+v0.3.2
+======
+* Pin pyasn1 to 0.6.0 in conda recipe.
+
 v0.3.1
 ======
 * Pin pysnmp to 4.4.12 in conda recipe.

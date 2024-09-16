@@ -21,6 +21,7 @@ test:
     - ts-ess-common
     - ts-dds
     - pysnmp
+    - pyasn1
   source_files:
     - python
     - bin
@@ -49,3 +50,4 @@ requirements:
     - ts-ess-csc
     - ts-ess-common
     - pysnmp =4.4.12
+    - pyasn1 =0.6.0
